@@ -28,13 +28,6 @@ class FlockLockStrategy implements LockStrategyInterface
     protected $temporaryDirectory;
 
     /**
-     * Identifier used for this lock
-     *
-     * @var string
-     */
-    protected $id;
-
-    /**
      * File name used for this lock
      *
      * @var string
@@ -161,13 +154,5 @@ class FlockLockStrategy implements LockStrategyInterface
         }
 
         return $success;
-    }
-
-    /**
-     * @return string
-     */
-    public function getLockFileName()
-    {
-        return $this->lockFileName;
     }
 }

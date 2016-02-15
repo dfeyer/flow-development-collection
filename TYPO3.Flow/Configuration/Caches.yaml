@@ -31,7 +31,7 @@ Flow_Cache_ResourceFiles: []
 # about Doctrine proxy class building.
 Flow_Core:
   frontend: TYPO3\Flow\Cache\Frontend\StringFrontend
-  backend: TYPO3\Flow\Cache\Backend\SimpleFileBackend
+  backend: TYPO3\Flow\Cache\Backend\SharedMemoryBackend
 
 # Flow_I18n_*
 #
@@ -46,7 +46,7 @@ Flow_I18n_Cldr_Reader_PluralsReaderCache: []
 
 # Flow_Monitor
 Flow_Monitor:
-  backend: TYPO3\Flow\Cache\Backend\SimpleFileBackend
+  backend: TYPO3\Flow\Cache\Backend\SharedMemoryBackend
   frontend: TYPO3\Flow\Cache\Frontend\StringFrontend
 
 # Flow_Mvc_Routing_*
