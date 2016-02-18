@@ -18,6 +18,8 @@ use TYPO3\Flow\Object\ObjectManagerInterface;
 use TYPO3\Flow\Package\PackageManagerInterface;
 use TYPO3\Flow\Persistence\PersistenceManagerInterface;
 use TYPO3\Flow\Resource\CollectionInterface;
+use TYPO3\Flow\Resource\Publishing\Notification;
+use TYPO3\Flow\Resource\Publishing\NotificationCollector;
 use TYPO3\Flow\Resource\ResourceManager;
 use TYPO3\Flow\Resource\ResourceRepository;
 
@@ -59,6 +61,12 @@ class ResourceCommandController extends CommandController
     protected $objectManager;
 
     /**
+     * @Flow\Inject
+     * @var NotificationCollector
+     */
+    protected $notificationCollector;
+
+    /**
      * Publish resources
      *
      * This command publishes the resources of the given or - if none was specified, all - resource collections
@@ -87,6 +95,14 @@ class ResourceCommandController extends CommandController
                 $target = $collection->getTarget();
                 $target->publishCollection($collection, function ($iteration) {
                     $this->clearState($iteration);
+                });
+            }
+
+            if ($this->notificationCollector->hasNotification()) {
+                $this->outputLine();
+                $this->outputLine('The system has generate some notifications, please check if you can solve some issue:');
+                $this->notificationCollector->flush(function (Notification $notification) {
+                    $this->outputLine($notification->getSeverityLabel() . ': ' . $notification->getMessage());
                 });
             }
         } catch (Exception $exception) {
