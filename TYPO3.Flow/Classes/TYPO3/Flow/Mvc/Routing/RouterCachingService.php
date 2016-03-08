@@ -62,6 +62,12 @@ class RouterCachingService
     protected $routingSettings;
 
     /**
+     * @Flow\InjectConfiguration("mvc.requestArgumentsBlacklist")
+     * @var array
+     */
+    protected $requestArgumentsBlacklist;
+
+    /**
      * @return void
      */
     public function initializeObject()
@@ -134,6 +140,7 @@ class RouterCachingService
         }
 
         $cacheIdentifier = $this->buildResolveCacheIdentifier($routeValues);
+        $uriPath = $this->buildResolveUriPath($uriPath);
         if ($cacheIdentifier !== null) {
             $this->resolveCache->set($cacheIdentifier, $uriPath, $this->extractUuids($routeValues));
         }
@@ -225,6 +232,28 @@ class RouterCachingService
     }
 
     /**
+     * @param string $uriPath
+     * @return string
+     */
+    protected function buildResolveUriPath($uriPath)
+    {
+        $uriParts = parse_url($uriPath);
+        if (!isset($uriParts['query']) || trim($uriParts['query']) === '') {
+            return $uriPath;
+        }
+        parse_str($uriParts['query'], $arguments);
+        $uriParts['query'] = $this->applyRequestArgumentBlacklist($arguments);
+        Arrays::sortKeysRecursively($uriParts['query']);
+        $query = http_build_query($uriParts['query']);
+        if ($query !== '') {
+            $uriPath = $uriParts['path'] . '?' . http_build_query($uriParts['query']);
+        } else {
+            $uriPath = $uriParts['path'];
+        }
+        return $uriPath;
+    }
+
+    /**
      * Generates the Resolve cache identifier for the given Request
      *
      * @param array $routeValues
@@ -232,8 +261,48 @@ class RouterCachingService
      */
     protected function buildResolveCacheIdentifier(array $routeValues)
     {
+        $routeValues = $this->applyRequestArgumentBlacklist($routeValues);
         Arrays::sortKeysRecursively($routeValues);
         return md5(http_build_query($routeValues));
+    }
+
+    /**
+     * @param array $arguments
+     * @return array
+     */
+    protected function applyRequestArgumentBlacklist(array $arguments)
+    {
+        if (!is_array($this->requestArgumentsBlacklist)) {
+            return $arguments;
+        }
+
+        foreach ($this->requestArgumentsBlacklist as $key => $configuration) {
+            $skipArguments = array_flip(array_keys(array_filter($configuration)));
+            if ($skipArguments === []) {
+                continue;
+            }
+            $match = false;
+            foreach ($configuration as $argumentName => $expression) {
+                $argumentValue = Arrays::getValueByPath($arguments, $argumentName);
+                if ($argumentValue === null) {
+                    continue;
+                }
+                if ($argumentValue !== null && $expression === true) {
+                    $match = true;
+                    continue;
+                }
+                $status = preg_match($expression, $argumentValue);
+                $match = $status === 1;
+                if ($match === false) {
+                    break;
+                }
+            }
+            if ($match === true) {
+                $arguments = array_diff_key($arguments, $skipArguments);
+            }
+        }
+
+        return $arguments;
     }
 
     /**

@@ -134,6 +134,11 @@ TYPO3:
       #   position: 'after Some.Package'
       #
       routes: []
+      requestArgumentsBlacklist:
+        search:
+          'what': TRUE
+          'where': TRUE
+          'filter': TRUE
 
     http:
       # Defines an explicit base URI that should be used. This affects
