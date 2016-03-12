@@ -44,6 +44,11 @@ class UriBuilder
     protected $arguments = array();
 
     /**
+     * @var array
+     */
+    protected $additionalArguments = array();
+
+    /**
      * Arguments which have been used for building the last URI
      * @var array
      */
@@ -116,6 +121,16 @@ class UriBuilder
     public function setArguments(array $arguments)
     {
         $this->arguments = $arguments;
+        return $this;
+    }
+
+    /**
+     * @param array $arguments
+     * @return $this
+     */
+    public function setAdditionalArguments(array $arguments)
+    {
+        $this->additionalArguments = $arguments;
         return $this;
     }
 
@@ -283,6 +298,7 @@ class UriBuilder
     public function reset()
     {
         $this->arguments = array();
+        $this->additionalArguments = array();
         $this->section = '';
         $this->format = null;
         $this->createAbsoluteUri = false;
@@ -383,10 +399,25 @@ class UriBuilder
         } elseif (!$this->createRelativePaths) {
             $uri = $httpRequest->getScriptRequestPath() . $uri;
         }
+        $uri = $this->appendAdditionArguments($uri);
         if ($this->section !== '') {
             $uri .= '#' . $this->section;
         }
         return $uri;
+    }
+
+    /**
+     * @param string $uri
+     * @return string
+     */
+    protected function appendAdditionArguments($uri)
+    {
+        if ($this->additionalArguments === []) {
+            return $uri;
+        }
+        $currentQuery = parse_url($uri, PHP_URL_QUERY);
+        $additionalQuery = http_build_query($this->additionalArguments);
+        return trim($currentQuery) === '' ? $uri . '?' . $additionalQuery : $uri . '&' . $additionalQuery;
     }
 
     /**
