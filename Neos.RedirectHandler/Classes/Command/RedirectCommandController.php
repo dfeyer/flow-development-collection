@@ -120,7 +120,9 @@ class RedirectCommandController extends CommandController
             $redirects = $this->redirectStorage->getAll($host);
         } else {
             $redirects = new \AppendIterator();
-            $redirects->append($this->redirectStorage->getAll(null));
+            if ($this->redirectStorage->getAll(null)->valid() === true) {
+                $redirects->append($this->redirectStorage->getAll(null));
+            }
             foreach ($this->redirectStorage->getDistinctHosts() as $host) {
                 $redirects->append($this->redirectStorage->getAll($host));
             }
